@@ -1,35 +1,43 @@
+#Tool definitions
 CC=gcc
 CXX=g++
-CCFLAGS=-Iinclude -I/usr/include/opencv4 --std=c++11
-CXXFLAGS=-Iinclude -I/usr/include/opencv4 --std=c++11
 
+# paths
 ROOTDIR = .
-OBJDIR = $(ROOTDIR)/obj
-SRCDIR = $(ROOTDIR)/src
-OUTDIR = $(ROOTDIR)/output
+SRCDIR = ${ROOTDIR}/src
+OUTDIR = ${ROOTDIR}/output
+
+
+#includes, libs, and flags
+INCS = -I/usr/include/opencv4 -I${ROOTDIR}/include
 
 LIBS = -lopencv_core \
-	   -lopencv_imgproc \
-	   -lopencv_highgui \
-	   -lopencv_imgcodecs \
+       -lopencv_imgproc \
+       -lopencv_highgui \
+       -lopencv_imgcodecs \
 
-CONF = -DOUTPUT_DIR='"$(OUTDIR)/"'
+CCFLAGS = -Wall --std=c++11 ${INCS} -DOUTPUT_DIR='"${OUTDIR}/"'
+CXXFLAGS = ${CCFLAGS}
+LDFLAGS = ${LIBS}
 
-OBJ = $(OBJDIR)/image_process.o
+
+SRC = ${SRCDIR}/image_process.cpp
+OBJ = ${SRC:.cpp=.o}
 
 TARGET = test
 
-.PHONY : clean all
+all : ${TARGET}
 
-all : $(TARGET)
+${OBJ} : ${SRC}
+	${CXX} -o $@ -c $< ${CXXFLAGS} 
 
-$(OBJDIR)/%.o : $(SRCDIR)/%.cpp
-	mkdir -p $(OBJDIR)
-	$(CXX) -o $@ -c $< $(CCFLAGS) $(CONF)
-
-$(TARGET) : $(OBJ)
-	$(CXX) -o $@ $^ $(CFLAGS) $(LIBS)
+${TARGET} : ${OBJ}
+	${CXX} -o $@ $^ ${LDFLAGS}
 
 clean:
-	rm -f $(TARGET)
-	rm -rf $(OBJDIR) $(OUTDIR)
+	rm -f ${TARGET}
+	rm -f ${OBJ}
+	rm -rf ${OUTDIR}
+
+
+.PHONY : clean all
