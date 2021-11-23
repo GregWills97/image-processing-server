@@ -1,2 +1,5 @@
 *.o
 test
+
+output/
+obj/

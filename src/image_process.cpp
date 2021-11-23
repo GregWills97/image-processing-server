@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <sys/stat.h>
 #include <opencv2/opencv.hpp>
 
 using namespace cv;
@@ -8,6 +9,11 @@ int main( int argc, char** argv )
 {
  char* imageName = argv[1];
  char output_image[128];
+
+ //Create output Directory
+ if(mkdir(OUTPUT_DIR, 0751) < 0) {
+     std::cout << "Error creating output directory " << std::endl;
+ }
 
  strcpy(output_image, OUTPUT_DIR);
  strcat(output_image, "Gray_Image.png");
