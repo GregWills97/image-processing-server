@@ -32,4 +32,4 @@ $(TARGET) : $(OBJ)
 
 clean:
 	rm -f $(TARGET)
-	rm -rf $(OBJDIR)
+	rm -rf $(OBJDIR) $(OUTDIR)
