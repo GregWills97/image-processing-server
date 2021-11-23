@@ -2,7 +2,6 @@ CC=g++
 CFLAGS=-Iinclude -I/usr/include/opencv4 --std=c++11
 
 ROOTDIR = .
-OBJDIR = $(ROOTDIR)/obj
 SRCDIR = $(ROOTDIR)/src
 OUTDIR = $(ROOTDIR)/output
 
@@ -13,7 +12,7 @@ LIBS = -lopencv_core \
 
 CONF = -DOUTPUT_DIR='"$(OUTDIR)/"'
 
-OBJ = $(OBJDIR)/image_process.o
+OBJ = $(SRCDIR)/image_process.o
 
 TARGET = test
 
@@ -21,7 +20,7 @@ TARGET = test
 
 all : $(TARGET)
 
-$(OBJDIR)/%.o : $(SRCDIR)/%.cpp
+$(SRCDIR)/%.o : $(SRCDIR)/%.cpp
 	$(CC) -o $@ -c $< $(CFLAGS) $(CONF)
 
 $(TARGET) : $(OBJ)
@@ -29,4 +28,4 @@ $(TARGET) : $(OBJ)
 
 clean:
 	rm -f $(TARGET)
-	rm -f $(OBJDIR)/*.o
+	rm -f $(SRCDIR)/*.o
