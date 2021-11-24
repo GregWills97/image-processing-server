@@ -3,13 +3,13 @@ CC=gcc
 CXX=g++
 
 # paths
-ROOTDIR = .
-SRCDIR = $(ROOTDIR)/src
-OUTDIR = $(ROOTDIR)/output
+SRCDIR = ./src
+BUILD = ./build
+OUTDIR = ./output
 
 
 #includes, libs, and flags
-INCS = -I/usr/include/opencv4 -I$(ROOTDIR)/include
+INCS = -I/usr/include/opencv4 -I./include
 
 LIBS = -lopencv_core \
        -lopencv_imgproc \
@@ -20,26 +20,30 @@ CFLAGS = -Wall $(INCS) -DOUTPUT_DIR='"$(OUTDIR)/"'
 CXXFLAGS = $(CFLAGS) --std=c++11
 LDFLAGS = $(LIBS)
 
+# Source and Files
+C_SOURCES = $(shell find $(SRCDIR) -maxdepth 1 -type f -name *.c)
+CXX_SOURCES = $(shell find $(SRCDIR) -maxdepth 1 -type f -name *.cpp)
+OBJECTS = $(patsubst $(SRCDIR)/%.c,$(BUILD)/%.o,$(C_SOURCES)) $(patsubst $(SRCDIR)/%.cpp,$(BUILD)/%.o,$(CXX_SOURCES))
 
-C_SRC = $(SRCDIR)/server.c $(SRCDIR)/csapp.c
-CXX_SRC = $(SRCDIR)/image_process.cpp
-OBJ = $(CXX_SRC:.cpp=.o) $(C_SRC:.c=.o)
 
+# Targets 
 TARGET = test
 
 all : $(TARGET)
 
-$(TARGET) : $(OBJ)
+$(TARGET) : $(OBJECTS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
+$(BUILD)/%.o: $(SRCDIR)/%.c
+	@mkdir -p $(BUILD)
+	$(CC) -o $@ -c $< $(CFLAGS)
+
+$(BUILD)/%.o: $(SRCDIR)/%.cpp
+	@mkdir -p $(BUILD)
+	$(CXX) -o $@ -c $< $(CXXFLAGS)
+
 clean:
-	rm -f $(TARGET) $(OBJ)
-	rm -rf $(OUTDIR)
-
-.c.o:
-	$(CC) -o $@ -c $< $(CFLAGS) 
-
-.cpp.o:
-	$(CXX) -o $@ -c $< $(CXXFLAGS) 
+	rm -f $(TARGET) 
+	rm -rf $(OUTDIR) $(BUILD)
 
 .PHONY : clean all
