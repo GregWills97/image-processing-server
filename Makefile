@@ -33,8 +33,7 @@ $(TARGET) : $(OBJ)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f $(TARGET)
-	rm -f $(OBJ)
+	rm -f $(TARGET) $(OBJ)
 	rm -rf $(OUTDIR)
 
 .c.o:

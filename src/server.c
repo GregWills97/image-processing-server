@@ -10,7 +10,7 @@ int main (int argc, char* argv[]) {
     char output_path[128];
 
     if (argc != 3) {
-        printf("Usage:\t./test <image> <function\n");
+        printf("Usage:\t./test <image> <function>\n");
         return 0;
     }
 
