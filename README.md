@@ -10,8 +10,8 @@ make
 ```
 
 ## Testing
-Execute the test binary with an test image from the test_image directory
+Execute the test binary with an test image from the test_image directory. Choose "grayscale" to return a grayscaled image.
 ```
-./test test_images/test1.jpg
+./test test_images/test1.jpg grayscale
 ```
 

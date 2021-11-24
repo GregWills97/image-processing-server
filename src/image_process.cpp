@@ -1,44 +1,24 @@
-#include <iostream>
-#include <string>
-#include <sys/stat.h>
 #include <opencv2/opencv.hpp>
 
-using namespace cv;
+#include "image_process.h"
 
-int main( int argc, char** argv )
-{
- char* imageName = argv[1];
- char output_image[128];
+void grayscale_image(const char* in_file_path, const char* out_file_path) {
 
- //Create output Directory
- if(mkdir(OUTPUT_DIR, 0751) < 0) {
-     std::cout << "Error creating output directory " << std::endl;
- }
+    /* Create images */
+    cv::Mat image;
+    cv::Mat gray_image;
 
- strcpy(output_image, OUTPUT_DIR);
- strcat(output_image, "Gray_Image.png");
-
- Mat image;
- image = imread( imageName, 1 );
-
- if( argc != 2 || !image.data )
- {
-   printf( " No image data \n " );
-   return -1;
- }
-
- Mat gray_image;
- cvtColor( image, gray_image, COLOR_BGR2GRAY );
-
- imwrite( output_image, gray_image );
-
- namedWindow( imageName, WINDOW_AUTOSIZE );
- namedWindow( "Gray_image", WINDOW_AUTOSIZE );
-
- imshow( imageName, image );
- imshow( "Gray_image", gray_image );
-
- waitKey(0);
-
- return 0;
+    /* Read image, convert to grayscale, write it out*/
+    image = cv::imread(in_file_path, 1);
+    cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
+    cv::imwrite(out_file_path, gray_image);
+    
+    /* show in window */
+    cv::namedWindow(in_file_path, cv::WINDOW_AUTOSIZE);
+    cv::namedWindow(out_file_path, cv::WINDOW_AUTOSIZE);
+    cv::imshow(in_file_path, image);
+    cv::imshow(out_file_path, gray_image);
+    
+    /* wait till button is pressed to close windows */
+    cv::waitKey(0);
 }
