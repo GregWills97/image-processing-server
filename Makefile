@@ -16,27 +16,32 @@ LIBS = -lopencv_core \
        -lopencv_highgui \
        -lopencv_imgcodecs \
 
-CCFLAGS = -Wall --std=c++11 ${INCS} -DOUTPUT_DIR='"${OUTDIR}/"'
-CXXFLAGS = ${CCFLAGS}
+CFLAGS = -Wall ${INCS} -DOUTPUT_DIR='"${OUTDIR}/"'
+CXXFLAGS = ${CFLAGS} --std=c++11
 LDFLAGS = ${LIBS}
 
 
-SRC = ${SRCDIR}/image_process.cpp
-OBJ = ${SRC:.cpp=.o}
+C_SRC = ${SRCDIR}/csapp.c
+CXX_SRC = ${SRCDIR}/image_process.cpp
+C_OBJ = ${C_SRC:.c=.o}
+CXX_OBJ = ${CXX_SRC:.cpp=.o}
 
 TARGET = test
 
 all : ${TARGET}
 
-${OBJ} : ${SRC}
+${C_OBJ} : ${C_SRC}
+	${CC} -o $@ -c $< ${CFLAGS} 
+
+${CXX_OBJ} : ${CXX_SRC}
 	${CXX} -o $@ -c $< ${CXXFLAGS} 
 
-${TARGET} : ${OBJ}
+${TARGET} : ${C_OBJ} ${CXX_OBJ}
 	${CXX} -o $@ $^ ${LDFLAGS}
 
 clean:
 	rm -f ${TARGET}
-	rm -f ${OBJ}
+	rm -f ${C_OBJ} ${CXX_OBJ}
 	rm -rf ${OUTDIR}
 
 
