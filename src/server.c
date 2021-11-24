@@ -4,8 +4,6 @@
 
 #include "image_process.hpp"
 
-void grayscale_image(const char* in_file_path, const char* out_file_path);
-
 int main (int argc, char* argv[]) {
     char* imageName = argv[1];
     char* function  = argv[2];
