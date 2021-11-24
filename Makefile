@@ -20,11 +20,13 @@ CFLAGS = -Wall $(INCS) -DOUTPUT_DIR='"$(OUTDIR)/"'
 CXXFLAGS = $(CFLAGS) --std=c++11
 LDFLAGS = $(LIBS)
 
-# Source and Files
+# Source and object files
 C_SOURCES = $(shell find $(SRCDIR) -maxdepth 1 -type f -name *.c)
 CXX_SOURCES = $(shell find $(SRCDIR) -maxdepth 1 -type f -name *.cpp)
-OBJECTS = $(patsubst $(SRCDIR)/%.c,$(BUILD)/%.o,$(C_SOURCES)) $(patsubst $(SRCDIR)/%.cpp,$(BUILD)/%.o,$(CXX_SOURCES))
+C_OBJS = $(patsubst $(SRCDIR)/%.c,$(BUILD)/%.o,$(C_SOURCES))
+CXX_OBJS = $(patsubst $(SRCDIR)/%.cpp,$(BUILD)/%.o,$(CXX_SOURCES))
 
+OBJECTS = $(C_OBJS) $(CXX_OBJS)
 
 # Targets 
 TARGET = test
