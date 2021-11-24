@@ -1,6 +1,6 @@
 #include <opencv2/opencv.hpp>
 
-#include "image_process.h"
+#include "image_process.hpp"
 
 void grayscale_image(const char* in_file_path, const char* out_file_path) {
 
