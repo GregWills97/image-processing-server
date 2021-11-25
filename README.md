@@ -10,8 +10,13 @@ make
 ```
 
 ## Testing
-Execute the test binary with an test image from the test_image directory. Choose "grayscale" to return a grayscaled image.
+Execute the test binary with an test image from the test_image directory. Choose "grayscale" or "blur" to return a grayscaled or blurred image.
 ```
 ./test test_images/test1.jpg grayscale
+./test test_images/test1.jpg blur
+```
+Test edge detection with the command below, where 0 and 100 will be the low and high thresholds respectively.
+```
+./test test_images/test1.jpg edge-detect 0 100
 ```
 
