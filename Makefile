@@ -21,25 +21,39 @@ CFLAGS = $(INCS)
 CXXFLAGS = $(CFLAGS) --std=c++11
 LDFLAGS = $(LIBS)
 
-# Source and object files
-C_SOURCES = $(shell find $(SRCDIR) -maxdepth 1 -type f -name *.c)
-CXX_SOURCES = $(shell find $(SRCDIR) -maxdepth 1 -type f -name *.cpp)
-C_OBJS = $(patsubst $(SRCDIR)/%.c,$(BUILD)/%.o,$(C_SOURCES))
-CXX_OBJS = $(patsubst $(SRCDIR)/%.cpp,$(BUILD)/%.o,$(CXX_SOURCES))
+# Common source and object files
+COMMON_SOURCES = $(shell find $(SRCDIR) -maxdepth 1 -type f -name *.c)
+COMMON_OBJECTS = $(patsubst $(SRCDIR)/%.c,$(BUILD)/%.o,$(COMMON_SOURCES))
 
-OBJECTS = $(C_OBJS) $(CXX_OBJS)
+# Server source and object files
+SERVER_SOURCES = $(shell find $(SRCDIR)/server -maxdepth 1 -type f -name *.c)
+SERVER_SOURCES++ = $(shell find $(SRCDIR)/server -maxdepth 1 -type f -name *.cpp)
+SERVER_OBJS = $(patsubst $(SRCDIR)/server/%.c,$(BUILD)/server/%.o,$(SERVER_SOURCES))
+SERVER_OBJS++ = $(patsubst $(SRCDIR)/server/%.cpp,$(BUILD)/server/%.o,$(SERVER_SOURCES++))
+SERVER_OBJECTS = $(SERVER_OBJS) $(SERVER_OBJS++) $(COMMON_OBJECTS)
+
+# Server source and object files
+CLIENT_SOURCES = $(shell find $(SRCDIR)/client -maxdepth 1 -type f -name *.c)
+CLIENT_OBJS = $(patsubst $(SRCDIR)/client/%.c,$(BUILD)/client/%.o,$(CLIENT_SOURCES))
+CLIENT_OBJECTS = $(CLIENT_OBJS) $(COMMON_OBJECTS)
 
 # Targets 
-TARGET = server
 
-all : directories $(TARGET)
+SERVER = ips-server
+CLIENT = ips-client
+
+all : directories $(SERVER) $(CLIENT)
 
 directories: 
-	@mkdir -p $(BUILD)
+	@mkdir -p $(BUILD)/server
+	@mkdir -p $(BUILD)/client
 	@mkdir -p $(OUTDIR)
 
-$(TARGET) : $(OBJECTS)
+$(SERVER) : $(SERVER_OBJECTS);
 	$(CXX) -o $@ $^ $(LDFLAGS)
+
+$(CLIENT) : $(CLIENT_OBJECTS);
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(BUILD)/%.o: $(SRCDIR)/%.c
 	$(CC) -o $@ -c $< $(CFLAGS)
@@ -48,7 +62,7 @@ $(BUILD)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) -o $@ -c $< $(CXXFLAGS)
 
 clean:
-	rm -f $(TARGET) 
+	rm -f $(SERVER) $(CLIENT)
 	rm -rf $(OUTDIR) $(BUILD)
 
 .PHONY : clean all

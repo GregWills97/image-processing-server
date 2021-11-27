@@ -38,14 +38,14 @@ int main (int argc, char* argv[]) {
 
 void serve_request(int fd) {
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
-    char req_filetype[MAXLINE], req_filesize[MAXLINE];
+    char image_type[MAXLINE], image_size[MAXLINE];
     struct stat sbuf;
     rio_t rio;
 
     Rio_readinitb(&rio, fd);
     Rio_readlineb(&rio, buf, MAXLINE);
     sscanf(buf, "%s %s %s", method, uri, version);
-    read_request_headers(&rio, req_filetype, req_filesize);
+    read_request_headers(&rio, image_type, image_size);
 
     //GET request just return sample image
     if (!strcasecmp(method, "GET")) {
@@ -62,15 +62,18 @@ void serve_request(int fd) {
             format_error(fd, uri, "404", "Missing", "Invalid type of processing method");
             return;
         }
+
         format_success(fd, "Image processed", 
                 "Image was succuessfully processed and should be lcoated in output directory");
         return;
     }
 
-    //PUSH request should be file upload
-    if (!strcasecmp(method, "PUSH")) {
+    //POST request should be file upload
+    if (!strcasecmp(method, "POST")) {
         //read and print out request headers
-        read_request_headers(&rio, req_filetype, req_filesize);
+        format_error(fd, method, "501", "Not Implemented",
+            "Simple image server does not implement this method");
+        return;
     }
 
     format_error(fd, method, "501", "Not Implemented",

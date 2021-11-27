@@ -12,7 +12,7 @@ make
 ## Testing
 Test the webserver by executing the binary with a port number:
 ```
-./server 1024
+./ips-server 1024
 ```
 Use a browser to nagivate to the server and choose and image processing technique.
 ```
@@ -21,3 +21,7 @@ http://localhost:1024/edge-detect
 http://localhost:1024/blur
 ```
 
+Test the client by executing the binary with a port number. The client should print out the "501 Error" response from the server and the server should print the clients request.
+```
+./ips-client 1024
+```
