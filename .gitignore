@@ -1,4 +1,6 @@
 *.o
-test
+ips-server
+ips-client
 
 output/
+build/
