@@ -14,5 +14,10 @@ Test the webserver by executing the binary with a port number:
 ```
 ./server 1024
 ```
-Use a browser to nagivate to http://localhost:1024 to view the error message sent from the http server.
+Use a browser to nagivate to the server and choose and image processing technique.
+```
+http://localhost:1024/grayscale
+http://localhost:1024/edge-detect
+http://localhost:1024/blur
+```
 

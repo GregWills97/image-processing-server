@@ -23,7 +23,7 @@ void grayscale_file(const char* in_file_path, const char* out_file_path) {
     cv::waitKey(0);
 }
 
-void edge_detect_file(const char* in_file_path, const char* out_file_path, int lowt, int hight) {
+void edge_detect_file(const char* in_file_path, const char* out_file_path, int low_threshold, int high_threshold, int kernel_size) {
 
     /* Create images */
     cv::Mat src;
@@ -33,7 +33,7 @@ void edge_detect_file(const char* in_file_path, const char* out_file_path, int l
     src = cv::imread(in_file_path, 1);
     cv::cvtColor(src, dst, cv::COLOR_BGR2GRAY);
     cv::blur(dst, dst, cv::Size(3,3));
-    cv::Canny(dst, dst, lowt, hight, 3);
+    cv::Canny(dst, dst, low_threshold, high_threshold, kernel_size);
     cv::imwrite(out_file_path, dst);
     
     /* Show in window */
@@ -46,7 +46,7 @@ void edge_detect_file(const char* in_file_path, const char* out_file_path, int l
     cv::waitKey(0);
 }
 
-void blur_file(const char* in_file_path, const char* out_file_path) {
+void blur_file(const char* in_file_path, const char* out_file_path, int kernel_size) {
 
     /* Create images */
     cv::Mat src;
@@ -55,7 +55,7 @@ void blur_file(const char* in_file_path, const char* out_file_path) {
     /* Read in image, convert to gray scale */
     src = cv::imread(in_file_path, 1);
     dst.create(src.size(), src.type());
-    cv::blur(src, dst, cv::Size(3,3));
+    cv::blur(src, dst, cv::Size(kernel_size,kernel_size));
     cv::imwrite(out_file_path, dst);
     
     /* Show in window */
