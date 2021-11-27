@@ -16,7 +16,7 @@ LIBS = -lopencv_core \
        -lopencv_highgui \
        -lopencv_imgcodecs \
 
-CFLAGS = -Wall $(INCS) -DOUTPUT_DIR='"$(OUTDIR)/"'
+CFLAGS = $(INCS) -DOUTPUT_DIR='"$(OUTDIR)/"'
 CXXFLAGS = $(CFLAGS) --std=c++11
 LDFLAGS = $(LIBS)
 
