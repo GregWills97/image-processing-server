@@ -7,10 +7,10 @@
 #include "csapp.h"
 
 void serve_request(int fd);
+void format_success(int fd, char* shortmsg, char* longmsg);
 void format_error(int fd, char* cause, char* error_num, char* shortmsg, char* longmsg);
-void read_request_headers(rio_t* rp);
+void read_request_headers(rio_t* rp, char* content_type, char* content_size);
 void get_filetype(char* filename, char* filetype);
-void parse_uri(char* uri, char* filename, char* args);
 
 int main (int argc, char* argv[]) {
     int listenfd, connfd;
@@ -38,61 +38,95 @@ int main (int argc, char* argv[]) {
 
 void serve_request(int fd) {
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
-    char filename[MAXLINE], args[MAXLINE];
+    char req_filetype[MAXLINE], req_filesize[MAXLINE];
     struct stat sbuf;
     rio_t rio;
 
     Rio_readinitb(&rio, fd);
     Rio_readlineb(&rio, buf, MAXLINE);
     sscanf(buf, "%s %s %s", method, uri, version);
-
-    //read and print out request headers
-    read_request_headers(&rio);
+    read_request_headers(&rio, req_filetype, req_filesize);
 
     //GET request just return sample image
     if (!strcasecmp(method, "GET")) {
-        parse_uri(uri, filename, args);
-
-        if (!strcmp(filename, "/grayscale")) {
+        if (!strcmp(uri, "/grayscale")) {
             grayscale_file("./test_images/test1.jpg", "./output/gray_image1.jpg");
         }
-        else if (!strcmp(filename, "/edge-detect")) {
-            edge_detect_file("./test_images/test1.jpg", "./output/gray_image1.jpg", 25, 50, 3);
+        else if (!strcmp(uri, "/edge-detect")) {
+            edge_detect_file("./test_images/test1.jpg", "./output/edge_detect_image1.jpg", 25, 50, 3);
         }
-        if (!strcmp(filename, "/blur")) {
-            blur_file("./test_images/test1.jpg", "./output/gray_image1.jpg", 20);
+        else if (!strcmp(uri, "/blur")) {
+            blur_file("./test_images/test1.jpg", "./output/blur_image1.jpg", 20);
         }
-    }
-
-    if (!strcasecmp(method, "POST")) {
-        format_error(fd, method, "501", "Not Implemented",
-        "Simple image server does not implement this method");
+        else {
+            format_error(fd, uri, "404", "Missing", "Invalid type of processing method");
+            return;
+        }
+        format_success(fd, "Image processed", 
+                "Image was succuessfully processed and should be lcoated in output directory");
         return;
     }
 
+    //PUSH request should be file upload
+    if (!strcasecmp(method, "PUSH")) {
+        //read and print out request headers
+        read_request_headers(&rio, req_filetype, req_filesize);
+    }
+
+    format_error(fd, method, "501", "Not Implemented",
+        "Simple image server does not implement this method");
 }
 
-void read_request_headers(rio_t *rp) {
+void read_request_headers(rio_t *rp, char* content_type, char* content_size) {
     char buf[MAXLINE];
+    char* ptr;
 
     //print request information while we read
-    Rio_readlineb(rp, buf, MAXLINE);
     while (strcmp(buf, "\r\n")) {
         Rio_readlineb(rp, buf, MAXLINE);
+        if (strstr(buf, "Content-Type:")) {
+            ptr = index(buf, ' ');
+            if (ptr)
+                strcpy(content_type, ptr+1);
+        }
+        else if (strstr(buf, "Content-Length:")) {
+            ptr = index(buf, ' ');
+            if (ptr)
+                strcpy(content_size, ptr+1);
+        }
         printf("%s", buf);
     }
 }
 
-void parse_uri(char* uri, char* filename, char* args) {
-    char* ptr;
-    strcpy(args, "");
-    strcpy(filename, ".");
-    strcpy(filename, uri);
+void format_success(int fd, char* shortmsg, char* longmsg) {
+    char buf[MAXLINE], body[MAXLINE];
+
+    sprintf(body, "<html><title>Simple Image Sucess</title>");
+    sprintf(body, "%s<body bgcolor=\"ffffff\">\r\n", body);
+    sprintf(body, "%sSUCCESS: %s\r\n", body, shortmsg);
+    sprintf(body, "%s<p>%s\r\n", body, longmsg);
+    sprintf(body, "%s<hr><em>The Simple Image Server</em>\r\n", body);
+
+    sprintf(buf, "HTTP/1.0 200 OK\r\n");
+    Rio_writen(fd, buf, strlen(buf));
+    sprintf(buf, "Server: Simple Image Server\r\n");
+    Rio_writen(fd, buf, strlen(buf));
+    sprintf(buf, "Content-type: text/html\r\n");
+    Rio_writen(fd, buf, strlen(buf));
+    sprintf(buf, "Content-length: ^d\r\n\r\n", (int)strlen(body));
+    Rio_writen(fd, buf, strlen(buf));
+    Rio_writen(fd, body, strlen(body));
 }
 
-
 void format_error(int fd, char* cause, char* error_num, char* shortmsg, char* longmsg) {
-    char buf[MAXLINE];
+    char buf[MAXLINE], body[MAXLINE];
+
+    sprintf(body, "<html><title>Simple Image Server Error</title>");
+    sprintf(body, "%s<body bgcolor=\"ffffff\">\r\n", body);
+    sprintf(body, "%s%s: %s\r\n", body, error_num, shortmsg);
+    sprintf(body, "%s<p>%s: %s\r\n", body, longmsg, cause);
+    sprintf(body, "%s<hr><em>The Simple Image Server</em>\r\n", body);
+
 
     sprintf(buf, "HTTP/1.0 %s %s\r\n", error_num, shortmsg);
     Rio_writen(fd, buf, strlen(buf));
@@ -100,4 +134,5 @@ void format_error(int fd, char* cause, char* error_num, char* shortmsg, char* lo
     Rio_writen(fd, buf, strlen(buf));
     sprintf(buf, "Connection: Closed\r\n\r\n");
     Rio_writen(fd, buf, strlen(buf));
+    Rio_writen(fd, body, strlen(body));
 }

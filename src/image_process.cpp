@@ -13,14 +13,14 @@ void grayscale_file(const char* in_file_path, const char* out_file_path) {
     cv::cvtColor(src, dst, cv::COLOR_BGR2GRAY);
     cv::imwrite(out_file_path, dst);
     
-    /* show in window */
-    cv::namedWindow(in_file_path, cv::WINDOW_AUTOSIZE);
-    cv::namedWindow(out_file_path, cv::WINDOW_AUTOSIZE);
-    cv::imshow(in_file_path, src);
-    cv::imshow(out_file_path, dst);
-    
-    /* wait till button is pressed to close windows */
-    cv::waitKey(0);
+    ///* show in window */
+    //cv::namedWindow(in_file_path, cv::WINDOW_AUTOSIZE);
+    //cv::namedWindow(out_file_path, cv::WINDOW_AUTOSIZE);
+    //cv::imshow(in_file_path, src);
+    //cv::imshow(out_file_path, dst);
+    //
+    ///* wait till button is pressed to close windows */
+    //cv::waitKey(0);
 }
 
 void edge_detect_file(const char* in_file_path, const char* out_file_path, int low_threshold, int high_threshold, int kernel_size) {
@@ -36,14 +36,14 @@ void edge_detect_file(const char* in_file_path, const char* out_file_path, int l
     cv::Canny(dst, dst, low_threshold, high_threshold, kernel_size);
     cv::imwrite(out_file_path, dst);
     
-    /* Show in window */
-    cv::namedWindow(in_file_path, cv::WINDOW_AUTOSIZE);
-    cv::namedWindow(out_file_path, cv::WINDOW_AUTOSIZE);
-    cv::imshow(in_file_path, src);
-    cv::imshow(out_file_path, dst);
+    ///* Show in window */
+    //cv::namedWindow(in_file_path, cv::WINDOW_AUTOSIZE);
+    //cv::namedWindow(out_file_path, cv::WINDOW_AUTOSIZE);
+    //cv::imshow(in_file_path, src);
+    //cv::imshow(out_file_path, dst);
 
-    /* wait till button is pressed to close windows */
-    cv::waitKey(0);
+    ///* wait till button is pressed to close windows */
+    //cv::waitKey(0);
 }
 
 void blur_file(const char* in_file_path, const char* out_file_path, int kernel_size) {
@@ -59,11 +59,11 @@ void blur_file(const char* in_file_path, const char* out_file_path, int kernel_s
     cv::imwrite(out_file_path, dst);
     
     /* Show in window */
-    cv::namedWindow(in_file_path, cv::WINDOW_AUTOSIZE);
-    cv::namedWindow(out_file_path, cv::WINDOW_AUTOSIZE);
-    cv::imshow(in_file_path, src);
-    cv::imshow(out_file_path, dst);
+    //cv::namedWindow(in_file_path, cv::WINDOW_AUTOSIZE);
+    //cv::namedWindow(out_file_path, cv::WINDOW_AUTOSIZE);
+    //cv::imshow(in_file_path, src);
+    //cv::imshow(out_file_path, dst);
 
-    /* wait till button is pressed to close windows */
-    cv::waitKey(0);
+    ///* wait till button is pressed to close windows */
+    //cv::waitKey(0);
 }

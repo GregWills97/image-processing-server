@@ -5,6 +5,7 @@ CXX=g++
 # paths
 SRCDIR = ./src
 BUILD = ./build
+OUTDIR = ./output
 INCDIR = ./include
 
 
@@ -31,17 +32,19 @@ OBJECTS = $(C_OBJS) $(CXX_OBJS)
 # Targets 
 TARGET = server
 
-all : $(TARGET)
+all : directories $(TARGET)
+
+directories: 
+	@mkdir -p $(BUILD)
+	@mkdir -p $(OUTDIR)
 
 $(TARGET) : $(OBJECTS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(BUILD)/%.o: $(SRCDIR)/%.c
-	@mkdir -p $(BUILD)
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 $(BUILD)/%.o: $(SRCDIR)/%.cpp
-	@mkdir -p $(BUILD)
 	$(CXX) -o $@ -c $< $(CXXFLAGS)
 
 clean:
