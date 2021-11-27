@@ -7,7 +7,8 @@
 #include "csapp.h"
 
 void serve_request(int fd);
-void client_error(int fd, char* cause, char* error_num, char* shortmsg, char* longmsg);
+void format_error(int fd, char* cause, char* error_num, char* shortmsg, char* longmsg);
+void read_request_info(rio_t* rp);
 void get_filetype(char* filename, char* filetype);
 
 int main (int argc, char* argv[]) {
@@ -42,23 +43,35 @@ void serve_request(int fd) {
     Rio_readinitb(&rio, fd);
     Rio_readlineb(&rio, buf, MAXLINE);
     sscanf(buf, "%s %s %s", method, uri, version);
-    client_error(fd, "method", "404", "Short msg", "Very long message");
+    read_request_info(&rio);
+    if (strcasecmp(method, "POST")) {
+        format_error(fd, method, "501", "Not Implemented",
+        "Simple image server does not implement this method");
+        return;
+    }
+
+    read_request_info(&rio);
 }
 
-void client_error(int fd, char* cause, char* error_num, char* shortmsg, char* longmsg) {
-    char buf[MAXLINE], body[MAXBUF];
+void read_request_info(rio_t *rp) {
+    char buf[MAXLINE];
 
-    sprintf(body, "<html><title>Error</title>");
-    sprintf(body, "%s<body bgcolor=\"ffffff\">\r\n", body);
-    sprintf(body, "%s%s: %s\r\n", body, error_num, shortmsg);
-    sprintf(body, "%s<p>%s: %s\r\n", body, longmsg, cause);
-    sprintf(body, "%s<hr><em>The Simple Image Server</em>\r\n", body);
+    //print request information while we read
+    Rio_readlineb(rp, buf, MAXLINE);
+    while (strcmp(buf, "\r\n")) {
+        Rio_readlineb(rp, buf, MAXLINE);
+        printf("%s", buf);
+    }
+}
+
+
+void format_error(int fd, char* cause, char* error_num, char* shortmsg, char* longmsg) {
+    char buf[MAXLINE];
 
     sprintf(buf, "HTTP/1.0 %s %s\r\n", error_num, shortmsg);
     Rio_writen(fd, buf, strlen(buf));
-    sprintf(buf, "Content-type: text/html\r\n");
+    sprintf(buf, "Server: Simple Image Server\r\n");
     Rio_writen(fd, buf, strlen(buf));
-    sprintf(buf, "Content-length: ^d\r\n\r\n", (int)strlen(body));
+    sprintf(buf, "Connection: Closed\r\n\r\n");
     Rio_writen(fd, buf, strlen(buf));
-    Rio_writen(fd, body, strlen(body));
 }
