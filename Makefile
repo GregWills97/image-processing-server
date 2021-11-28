@@ -51,10 +51,10 @@ directories:
 	@mkdir -p $(OUTDIR)
 	@mkdir -p $(DOWNLOADS)
 
-$(SERVER) : $(SERVER_OBJECTS);
+$(SERVER) : $(SERVER_OBJECTS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-$(CLIENT) : $(CLIENT_OBJECTS);
+$(CLIENT) : $(CLIENT_OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(BUILD)/%.o: $(SRCDIR)/%.c
