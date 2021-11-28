@@ -21,7 +21,7 @@ http://localhost:1024/edge-detect
 http://localhost:1024/blur
 ```
 
-Test the client by executing the binary with a port number. The client should print out the "501 Error" response from the server and the server should print the clients request.
+Test the client by executing the binary with a port number and an image. The client should print out the response from the server and the server should print the clients request. The server will download the image from the client in the downloads directory.
 ```
-./ips-client 1024
+./ips-client 1024 test_images/test1.jpg
 ```

@@ -10,6 +10,7 @@ void serve_request(int fd);
 void format_success(int fd, char* shortmsg, char* longmsg);
 void format_error(int fd, char* cause, char* error_num, char* shortmsg, char* longmsg);
 void read_request_headers(rio_t* rp, char* content_type, char* content_size);
+void read_image_file(rio_t* rp, int filesize);
 void get_filetype(char* filename, char* filetype);
 
 int main (int argc, char* argv[]) {
@@ -64,15 +65,15 @@ void serve_request(int fd) {
         }
 
         format_success(fd, "Image processed", 
-                "Image was succuessfully processed and should be lcoated in output directory");
+                "Image was succuessfully processed and should be located in output directory");
         return;
     }
 
     //POST request should be file upload
     if (!strcasecmp(method, "POST")) {
-        //read and print out request headers
-        format_error(fd, method, "501", "Not Implemented",
-            "Simple image server does not implement this method");
+        read_image_file(&rio, atoi(image_size));
+        format_success(fd, "Image received", 
+                "Image was succuessfully received and should be located in download directory");
         return;
     }
 
@@ -80,7 +81,7 @@ void serve_request(int fd) {
         "Simple image server does not implement this method");
 }
 
-void read_request_headers(rio_t *rp, char* content_type, char* content_size) {
+void read_request_headers(rio_t* rp, char* content_type, char* content_size) {
     char buf[MAXLINE];
     char* ptr;
 
@@ -101,6 +102,18 @@ void read_request_headers(rio_t *rp, char* content_type, char* content_size) {
     }
 }
 
+void read_image_file(rio_t* rp, int filesize) {
+    char buf[MAXBUF];
+    char* ptr;
+    int srcfd;
+
+    srcfd = Open("./downloads/downloaded-image.jpg", 
+            O_CREAT | O_RDWR, 0664);
+    Rio_readnb(rp, buf, filesize);
+    Write(srcfd, buf, filesize);
+    Close(srcfd);
+}
+
 void format_success(int fd, char* shortmsg, char* longmsg) {
     char buf[MAXLINE], body[MAXLINE];
 
@@ -116,7 +129,7 @@ void format_success(int fd, char* shortmsg, char* longmsg) {
     Rio_writen(fd, buf, strlen(buf));
     sprintf(buf, "Content-type: text/html\r\n");
     Rio_writen(fd, buf, strlen(buf));
-    sprintf(buf, "Content-length: ^d\r\n\r\n", (int)strlen(body));
+    sprintf(buf, "Content-length: %d\r\n\r\n", (int)strlen(body));
     Rio_writen(fd, buf, strlen(buf));
     Rio_writen(fd, body, strlen(body));
 }

@@ -7,6 +7,7 @@ SRCDIR = ./src
 BUILD = ./build
 OUTDIR = ./output
 INCDIR = ./include
+DOWNLOADS = ./downloads
 
 
 #includes, libs, and flags
@@ -48,6 +49,7 @@ directories:
 	@mkdir -p $(BUILD)/server
 	@mkdir -p $(BUILD)/client
 	@mkdir -p $(OUTDIR)
+	@mkdir -p $(DOWNLOADS)
 
 $(SERVER) : $(SERVER_OBJECTS);
 	$(CXX) -o $@ $^ $(LDFLAGS)
@@ -63,6 +65,6 @@ $(BUILD)/%.o: $(SRCDIR)/%.cpp
 
 clean:
 	rm -f $(SERVER) $(CLIENT)
-	rm -rf $(OUTDIR) $(BUILD)
+	rm -rf $(OUTDIR) $(BUILD) $(DOWNLOADS)
 
 .PHONY : clean all

@@ -52,9 +52,9 @@ extern int h_errno;    /* defined by BIND for DNS errors */
 extern char **environ; /* defined by libc */
 
 /* Misc constants */
-#define	MAXLINE	 8192  /* max text line length */
-#define MAXBUF   8192  /* max I/O buffer size */
-#define LISTENQ  1024  /* second argument to listen() */
+#define	MAXLINE	 8192     /* max text line length */
+#define MAXBUF   1048576  /* max I/O buffer size */
+#define LISTENQ  1024     /* second argument to listen() */
 
 /* Our own error-handling functions */
 void unix_error(char *msg);
