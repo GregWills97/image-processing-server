@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <sys/stat.h>
 
 #include "image_process.hpp"
@@ -10,7 +11,7 @@ void serve_request(int fd);
 void format_success(int fd, char* shortmsg, char* longmsg);
 void format_error(int fd, char* cause, char* error_num, char* shortmsg, char* longmsg);
 void read_request_headers(rio_t* rp, char* content_type, char* content_size);
-void read_image_file(rio_t* rp, int filesize);
+void read_image_file(rio_t* rp, int filesize, char* filename);
 void get_filetype(char* filename, char* filetype);
 
 int main (int argc, char* argv[]) {
@@ -40,6 +41,7 @@ int main (int argc, char* argv[]) {
 void serve_request(int fd) {
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
     char image_type[MAXLINE], image_size[MAXLINE];
+    char image_file[MAXLINE], output_file[MAXLINE];
     struct stat sbuf;
     rio_t rio;
 
@@ -69,11 +71,35 @@ void serve_request(int fd) {
         return;
     }
 
-    //POST request should be file upload
+    //POST request file upload
     if (!strcasecmp(method, "POST")) {
-        read_image_file(&rio, atoi(image_size));
-        format_success(fd, "Image received", 
-                "Image was succuessfully received and should be located in download directory");
+        printf("%s", image_type);
+        if (!strcmp(image_type, "image/jpeg\r\n")) {
+            read_image_file(&rio, atoi(image_size), image_file);
+            strncpy(output_file, image_file, (strlen(image_file)-4)); //remove extension
+            if (!strcmp(uri, "/grayscale")) {
+                strcat(output_file, "-grayscale.jpg");
+                grayscale_file(image_file, output_file);
+            }
+            else if (!strcmp(uri, "/edge-detect")) {
+                strcat(output_file, "-edge-detect.jpg");
+                edge_detect_file(image_file, output_file, 25, 50, 3);
+            }
+            else if (!strcmp(uri, "/blur")) {
+                strcat(output_file, "-blur.jpg");
+                blur_file(image_file, output_file, 20);
+            }
+            else {
+                format_error(fd, uri, "404", "Missing", "Invalid type of processing method");
+                return;
+            }
+            format_success(fd, "Image received", 
+                    "Image was succuessfully received and should be located in download directory");
+        }
+        else {
+            format_error(fd, method, "404", "File type not supported",
+                "Simple image server cannot support this file type");
+        }
         return;
     }
 
@@ -102,13 +128,15 @@ void read_request_headers(rio_t* rp, char* content_type, char* content_size) {
     }
 }
 
-void read_image_file(rio_t* rp, int filesize) {
+void read_image_file(rio_t* rp, int filesize, char* filename) {
     char buf[MAXBUF];
     char* ptr;
     int srcfd;
 
-    srcfd = Open("./downloads/downloaded-image.jpg", 
-            O_CREAT | O_RDWR, 0664);
+    srand(time(0));
+    sprintf(filename, "./downloads/%d.jpg", rand());
+
+    srcfd = Open(filename, O_CREAT | O_RDWR, 0664);
     Rio_readnb(rp, buf, filesize);
     Write(srcfd, buf, filesize);
     Close(srcfd);
