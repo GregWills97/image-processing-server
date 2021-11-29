@@ -1,5 +1,5 @@
 ## Description
-This project is the early stages of an image processing server for GNU/Linux operating systems. Currently, all that has been developed is opencv image manipulation functions and a simple http server.
+This project is an image processing server for GNU/Linux operating systems.
 
 ## Compilation
 First install [opencv](https://opencv.org/)
@@ -21,7 +21,7 @@ http://localhost:1024/edge-detect
 http://localhost:1024/blur
 ```
 
-Test the client by executing the binary with a port number and an image. The client should print out the response from the server and the server should print the clients request. The server will download the image from the client in the downloads directory.
+Test the client by executing the binary with a port number and an image. The server should print the clients request and will download the image from the client in the downloads directory, process it, and send it back to the client. The client should print out the response from the server and download the image next to the input file. 
 ```
 ./ips-client 1024 test_images/test1.jpg
 ```

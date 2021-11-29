@@ -52,8 +52,8 @@ extern int h_errno;    /* defined by BIND for DNS errors */
 extern char **environ; /* defined by libc */
 
 /* Misc constants */
-#define	MAXLINE	 8192     /* max text line length */
-#define MAXBUF   1048576  /* max I/O buffer size */
+#define	MAXLINE	 8192     /* max text line length 8KB*/
+#define MAXBUF   4194304  /* max I/O buffer size 4MB*/ 
 #define LISTENQ  1024     /* second argument to listen() */
 
 /* Our own error-handling functions */

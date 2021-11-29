@@ -12,6 +12,7 @@ void format_success(int fd, char* shortmsg, char* longmsg);
 void format_error(int fd, char* cause, char* error_num, char* shortmsg, char* longmsg);
 void read_request_headers(rio_t* rp, char* content_type, char* content_size);
 void read_image_file(rio_t* rp, int filesize, char* filename);
+void send_image_file(int fd, char* filename);
 void get_filetype(char* filename, char* filetype);
 
 int main (int argc, char* argv[]) {
@@ -73,7 +74,6 @@ void serve_request(int fd) {
 
     //POST request file upload
     if (!strcasecmp(method, "POST")) {
-        printf("%s", image_type);
         if (!strcmp(image_type, "image/jpeg\r\n")) {
             read_image_file(&rio, atoi(image_size), image_file);
             strncpy(output_file, image_file, (strlen(image_file)-4)); //remove extension
@@ -93,8 +93,7 @@ void serve_request(int fd) {
                 format_error(fd, uri, "404", "Missing", "Invalid type of processing method");
                 return;
             }
-            format_success(fd, "Image received", 
-                    "Image was succuessfully received and should be located in download directory");
+            send_image_file(fd, output_file);
         }
         else {
             format_error(fd, method, "404", "File type not supported",
@@ -142,6 +141,30 @@ void read_image_file(rio_t* rp, int filesize, char* filename) {
     Close(srcfd);
 }
 
+void send_image_file(int fd, char* filename) {
+    char buf[MAXLINE];
+    int srcfd;
+    char* srcfp;
+    struct stat sbuf;
+
+    stat(filename, &sbuf);
+
+    srcfd = Open(filename, O_RDONLY, 0);
+    srcfp = Mmap(0, sbuf.st_size, PROT_READ, MAP_PRIVATE, srcfd, 0);
+    Close(srcfd);
+
+    sprintf(buf, "HTTP/1.0 200 OK\r\n");
+    Rio_writen(fd, buf, strlen(buf));
+    sprintf(buf, "Server: Simple Image Server\r\n");
+    Rio_writen(fd, buf, strlen(buf));
+    sprintf(buf, "Content-Type: image/jpeg\r\n");
+    Rio_writen(fd, buf, strlen(buf));
+    sprintf(buf, "Content-Length: %d\r\n\r\n", (int)sbuf.st_size);
+    Rio_writen(fd, buf, strlen(buf));
+    Rio_writen(fd, srcfp, sbuf.st_size);
+    Munmap(srcfp, sbuf.st_size);
+}
+
 void format_success(int fd, char* shortmsg, char* longmsg) {
     char buf[MAXLINE], body[MAXLINE];
 
@@ -155,9 +178,9 @@ void format_success(int fd, char* shortmsg, char* longmsg) {
     Rio_writen(fd, buf, strlen(buf));
     sprintf(buf, "Server: Simple Image Server\r\n");
     Rio_writen(fd, buf, strlen(buf));
-    sprintf(buf, "Content-type: text/html\r\n");
+    sprintf(buf, "Content-Type: text/html\r\n");
     Rio_writen(fd, buf, strlen(buf));
-    sprintf(buf, "Content-length: %d\r\n\r\n", (int)strlen(body));
+    sprintf(buf, "Content-Length: %d\r\n\r\n", (int)strlen(body));
     Rio_writen(fd, buf, strlen(buf));
     Rio_writen(fd, body, strlen(body));
 }
