@@ -48,6 +48,7 @@ void serve_request(int fd) {
 
     Rio_readinitb(&rio, fd);
     Rio_readlineb(&rio, buf, MAXLINE);
+    printf("%s", buf);
     sscanf(buf, "%s %s %s", method, uri, version);
     read_request_headers(&rio, image_type, image_size);
 
