@@ -3,25 +3,27 @@
 
 #include "csapp.h"
 
-void send_file(int fd, int port, char* filename, int filesize);
-void make_request(int fd, int port, char* filename, int filesize);
+void send_file(int fd, int port, char* filename, char* process_type, int filesize);
+void make_request(int fd, int port, char* filename, char* process_type, int filesize);
 void read_response_headers(rio_t* rp, char* filesize);
 void read_response_image(rio_t* rp, int filesize, char* filename);
 void get_filetype(char* filename, char* filetype);
 
 int main(int argc, char* argv[]) {
     int clientfd, port;
-    char* file_name;
+    char* file_name; 
+    char* process_type;
     socklen_t server_len;
     struct sockaddr_in server_addr;
     struct stat sbuf;
 
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s, <port>\n", argv[0]);
+    if (argc != 4) {
+        fprintf(stderr, "Usage: %s, <port> <file> <processing-type>\n", argv[0]);
         exit(1);
     }
     port = atoi(argv[1]);
     file_name = argv[2];
+    process_type = argv[3];
 
     if (stat(file_name, &sbuf) < 0) {
         fprintf(stderr, "Couldn't find file %s", argv[2]);
@@ -30,14 +32,14 @@ int main(int argc, char* argv[]) {
 
     clientfd = Open_clientfd("localhost", port);
 
-    send_file(clientfd, port, file_name, sbuf.st_size);
+    send_file(clientfd, port, file_name, process_type, sbuf.st_size);
 
     Close(clientfd);
 
     return 0;
 }
 
-void send_file(int fd, int port, char* filename, int filesize) {
+void send_file(int fd, int port, char* filename, char* process_type, int filesize) {
     char response_size[MAXLINE];
     char new_image[MAXLINE];
     rio_t rio;
@@ -46,7 +48,7 @@ void send_file(int fd, int port, char* filename, int filesize) {
     strcat(new_image, "-processed.jpg");
 
     Rio_readinitb(&rio, fd);
-    make_request(fd, port, filename, filesize);
+    make_request(fd, port, filename, process_type, filesize);
     read_response_headers(&rio, response_size);
     read_response_image(&rio, atoi(response_size), new_image);
 }
@@ -80,13 +82,13 @@ void read_response_image(rio_t* rp, int filesize, char* filename) {
     Close(srcfd);
 }
 
-void make_request(int fd, int port, char* filename, int filesize) {
+void make_request(int fd, int port, char* filename, char* process_type, int filesize) {
     int srcfd;
     char* srcfp;
     char filetype[MAXLINE], buf[MAXLINE];
 
     get_filetype(filename, filetype);
-    sprintf(buf, "POST /grayscale HTTP/1.0\r\n");
+    sprintf(buf, "POST /%s HTTP/1.0\r\n", process_type);
     Rio_writen(fd, buf, strlen(buf));
     sprintf(buf, "Host: localhost:%d\r\n", port);
     Rio_writen(fd, buf, strlen(buf));
