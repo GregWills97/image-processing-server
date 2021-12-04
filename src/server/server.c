@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 #include <time.h>
 #include <sys/stat.h>
 
 #include "image_process.hpp"
 #include "csapp.h"
 
-void serve_request(int fd);
+void *serve_request (void* args);
 void format_success(int fd, char* shortmsg, char* longmsg);
 void format_error(int fd, char* cause, char* error_num, char* shortmsg, char* longmsg);
 void read_request_headers(rio_t* rp, char* content_type, char* content_size);
@@ -16,10 +17,8 @@ void send_image_file(int fd, char* filename);
 void get_filetype(char* filename, char* filetype);
 
 int main (int argc, char* argv[]) {
-    int listenfd, connfd;
+    int listenfd;
     int port;
-    socklen_t client_len;
-    struct sockaddr_in client_addr;
 
     if (argc != 2) {
         fprintf(stderr, "Usage: %s, <port>\n", argv[0]);
@@ -30,48 +29,38 @@ int main (int argc, char* argv[]) {
     listenfd = Open_listenfd(port);
 
     while (1) {
+        int* connfd;
+        pthread_t request_thread;
+        struct sockaddr_in client_addr;
+        socklen_t client_len;
+
+        connfd = (int *)malloc(sizeof(int));
         client_len = sizeof(client_addr);
-        connfd = Accept(listenfd, (SA *)&client_addr, &client_len);
-        serve_request(connfd);
-        Close(connfd);
+        *connfd = Accept(listenfd, (SA *)&client_addr, &client_len);
+        pthread_create(&request_thread, NULL, serve_request, connfd);
+        //serve_request(connfd);
+        //Close(*connfd);
     }
 
     return 0;
 }
 
-void serve_request(int fd) {
+void *serve_request(void* args) {
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
     char image_type[MAXLINE], image_size[MAXLINE];
     char image_file[MAXLINE], output_file[MAXLINE];
     struct stat sbuf;
     rio_t rio;
+    int fd;
+
+    //dereference connection descriptor
+    fd = *(int *)args;
 
     Rio_readinitb(&rio, fd);
     Rio_readlineb(&rio, buf, MAXLINE);
     printf("%s", buf);
     sscanf(buf, "%s %s %s", method, uri, version);
     read_request_headers(&rio, image_type, image_size);
-
-    //GET request just return sample image
-    if (!strcasecmp(method, "GET")) {
-        if (!strcmp(uri, "/grayscale")) {
-            grayscale_file("./test_images/test1.jpg", "./output/gray_image1.jpg");
-        }
-        else if (!strcmp(uri, "/edge-detect")) {
-            edge_detect_file("./test_images/test1.jpg", "./output/edge_detect_image1.jpg", 25, 50, 3);
-        }
-        else if (!strcmp(uri, "/blur")) {
-            blur_file("./test_images/test1.jpg", "./output/blur_image1.jpg", 20);
-        }
-        else {
-            format_error(fd, uri, "404", "Missing", "Invalid type of processing method");
-            return;
-        }
-
-        format_success(fd, "Image processed", 
-                "Image was succuessfully processed and should be located in output directory");
-        return;
-    }
 
     //POST request file upload
     if (!strcasecmp(method, "POST")) {
@@ -92,7 +81,8 @@ void serve_request(int fd) {
             }
             else {
                 format_error(fd, uri, "404", "Missing", "Invalid type of processing method");
-                return;
+                Close(fd);
+                return NULL;
             }
             send_image_file(fd, output_file);
         }
@@ -100,11 +90,13 @@ void serve_request(int fd) {
             format_error(fd, method, "404", "File type not supported",
                 "Simple image server cannot support this file type");
         }
-        return;
+        Close(fd);
+        return NULL;
     }
 
     format_error(fd, method, "501", "Not Implemented",
         "Simple image server does not implement this method");
+    Close(fd);
 }
 
 void read_request_headers(rio_t* rp, char* content_type, char* content_size) {
