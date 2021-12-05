@@ -25,13 +25,19 @@ void get_filetype(char* filename, char* filetype);
 struct thread_args {
     int port_num;
     queue* process_queue;
+    pthread_barrier_t* barrier;
 };
 
 int main (int argc, char* argv[]) {
-    struct thread_args arguments;
+    int port, min_priority, policy;
+
     pthread_t listen_thread;
     pthread_t worker_threads[NUM_THREADS];
-    int port;
+    pthread_attr_t hp_attr;
+    pthread_attr_t lp_attr;
+    pthread_barrier_t bar;
+    struct sched_param my_param;
+    struct thread_args arguments;
 
     if (argc != 2) {
         fprintf(stderr, "Usage: %s, <port>\n", argv[0]);
@@ -39,22 +45,50 @@ int main (int argc, char* argv[]) {
     }
     port = atoi(argv[1]);
 
+    /* Main thread with low priority */
+    my_param.sched_priority = sched_get_priority_min(SCHED_FIFO);
+    min_priority = my_param.sched_priority;
+    pthread_setschedparam(pthread_self(), SCHED_RR, &my_param);
+	pthread_getschedparam (pthread_self(), &policy, &my_param);
+
+    /* Setup policy and priority for other threads */
+    pthread_attr_init(&hp_attr);
+    pthread_attr_init(&lp_attr);
+
+    pthread_attr_setinheritsched(&hp_attr, PTHREAD_EXPLICIT_SCHED);
+    pthread_attr_setinheritsched(&lp_attr, PTHREAD_EXPLICIT_SCHED);
+
+    pthread_attr_setschedpolicy(&hp_attr, SCHED_FIFO);
+    pthread_attr_setschedpolicy(&lp_attr, SCHED_FIFO);
+
+    my_param.sched_priority = min_priority + 1;
+    pthread_attr_setschedparam(&lp_attr, &my_param);
+    my_param.sched_priority = min_priority + 2;
+    pthread_attr_setschedparam(&hp_attr, &my_param);
+
+    pthread_barrier_init(&bar, NULL, 2);
+
     arguments.port_num = port;
     arguments.process_queue = queue_init();
+    arguments.barrier = &bar;
 
     //Create worker threads
     for (int i = 0; i < NUM_THREADS; i++) {
-        pthread_create(&worker_threads[i], NULL, serve_requests, &arguments);
+        pthread_create(&worker_threads[i], &lp_attr, serve_requests, &arguments);
     }
     //Create main thread
-    pthread_create(&listen_thread, NULL, listen_for_request, &arguments);
+    pthread_create(&listen_thread, &hp_attr, listen_for_request, &arguments);
 
     //Cleanup
     for (int i = 0; i < NUM_THREADS; i++) {
         pthread_join(worker_threads[i], NULL);
     }
     pthread_join(listen_thread, NULL);
+
     queue_delete(arguments.process_queue);
+    pthread_barrier_destroy(&bar);
+    pthread_attr_destroy(&hp_attr);
+    pthread_attr_destroy(&lp_attr);
     return 0;
 }
 
@@ -63,11 +97,15 @@ void *listen_for_request(void* args) {
     struct thread_args arguments;
     int port;
     queue* process_queue;
+    pthread_barrier_t* barp;
 
     /* Dereference arguments */
     arguments = *(struct thread_args *)args;
     port = arguments.port_num;
     process_queue = arguments.process_queue;
+    barp = arguments.barrier;
+
+    pthread_barrier_wait(barp);
 
     /* Start listening */
     listenfd = Open_listenfd(port);
@@ -80,12 +118,14 @@ void *listen_for_request(void* args) {
         connfd = Accept(listenfd, (SA *)&client_addr, &client_len);
         
         /* Add to queue */
+        printf("Listener is locking...\n\n");
         pthread_mutex_lock(process_queue->mut);
         while(process_queue->full) {
             pthread_cond_wait(process_queue->not_full, process_queue->mut);
             printf("Queue is full!\n");
         }
         queue_add(process_queue, connfd);
+        printf("Listener is unlocking...\n\n");
         pthread_mutex_unlock(process_queue->mut);
         pthread_cond_signal(process_queue->not_empty);
     }
@@ -96,18 +136,24 @@ void *serve_requests(void* args) {
     int fd;
     struct thread_args arguments;
     queue* process_queue;
+    pthread_barrier_t* barp;
 
     /* Dereference arguments */
     arguments = *(struct thread_args *)args;
     process_queue = arguments.process_queue;
+    barp = arguments.barrier;
+
+    pthread_barrier_wait(barp);
 
     /* Keep checking queue */
     while(1) {
+        printf("Worker is locking...\n\n");
         pthread_mutex_lock(process_queue->mut);
         while(process_queue->empty) {
             pthread_cond_wait(process_queue->not_empty, process_queue->mut);
         }
         queue_del(process_queue, &fd);
+        printf("Worker is unlocking...\n\n");
         pthread_mutex_unlock(process_queue->mut);
         pthread_cond_signal(process_queue->not_full);
 
