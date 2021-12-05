@@ -65,7 +65,6 @@ $(BUILD)/%.o: $(SRCDIR)/%.cpp
 clean:
 	rm -f $(SERVER) $(CLIENT)
 	rm -rf $(BUILD) $(DOWNLOADS)
-	rm *.log
 	rm test_images/*-*
 
 .PHONY : clean all

@@ -11,7 +11,6 @@
 #include "csapp.h"
 
 #define NUM_THREADS 3
-#define LOG_FILE "./ips-server.log"
 
 void *listen_for_request(void* args);
 void *serve_requests(void* args);
@@ -169,14 +168,11 @@ void process_request(int fd) {
     char image_file[MAXLINE], output_file[MAXLINE];
     struct stat sbuf;
     rio_t rio;
-    FILE *fp;
 
-    fp = fopen(LOG_FILE, "w");
 
     Rio_readinitb(&rio, fd);
     Rio_readlineb(&rio, buf, MAXLINE);
-    fprintf(fp, "%s", buf);
-    fclose(fp);
+    printf("%s", buf);
     sscanf(buf, "%s %s %s", method, uri, version);
     read_request_headers(&rio, image_type, image_size);
 
@@ -220,13 +216,11 @@ void process_request(int fd) {
 void read_request_headers(rio_t* rp, char* content_type, char* content_size) {
     char buf[MAXLINE];
     char* ptr;
-    FILE *fp;
-
-    fp = fopen(LOG_FILE, "w");
 
     //print request information while we read
     while (strcmp(buf, "\r\n")) {
         Rio_readlineb(rp, buf, MAXLINE);
+        printf("%s", buf);
         if (strstr(buf, "Content-Type:")) {
             ptr = index(buf, ' ');
             if (ptr)
@@ -237,9 +231,7 @@ void read_request_headers(rio_t* rp, char* content_type, char* content_size) {
             if (ptr)
                 strcpy(content_size, ptr+1);
         }
-        fprintf(fp, "%s", buf);
     }
-    fclose(fp);
 }
 
 void read_image_file(rio_t* rp, int filesize, char* filename) {

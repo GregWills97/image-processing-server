@@ -3,8 +3,6 @@
 
 #include "csapp.h"
 
-#define LOG_FILE "./ips-client.log"
-
 void send_file(int fd, int port, char* filename, char* process_type, int filesize);
 void make_request(int fd, int port, char* filename, char* process_type, int filesize);
 int read_response_headers(rio_t* rp, char* filesize);
@@ -68,13 +66,9 @@ int read_response_headers(rio_t* rp, char* filesize) {
     char* ptr;
     int error = 0;
 
-    FILE* fp;
-
-    fp = fopen(LOG_FILE, "w");
-
     Rio_readlineb(rp, buf, MAXLINE);
     sscanf(buf, "%s %s", version, code);
-    fprintf(fp, "%s", buf);
+    printf("%s", buf);
     if (strcmp(code, "200")) {
         error = 1;
     }
@@ -86,9 +80,8 @@ int read_response_headers(rio_t* rp, char* filesize) {
             if (ptr)
                 strcpy(filesize, ptr+1);
         }
-        fprintf(fp, "%s", buf);
+        printf("%s", buf);
     }
-    fclose(fp);
     return error;
 }
 
