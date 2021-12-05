@@ -5,7 +5,7 @@
 
 void send_file(int fd, int port, char* filename, char* process_type, int filesize);
 void make_request(int fd, int port, char* filename, char* process_type, int filesize);
-void read_response_headers(rio_t* rp, char* filesize);
+int read_response_headers(rio_t* rp, char* filesize);
 void read_response_image(rio_t* rp, int filesize, char* filename);
 void get_filetype(char* filename, char* filetype);
 
@@ -50,16 +50,24 @@ void send_file(int fd, int port, char* filename, char* process_type, int filesiz
 
     Rio_readinitb(&rio, fd);
     make_request(fd, port, filename, process_type, filesize);
-    read_response_headers(&rio, response_size);
-    read_response_image(&rio, atoi(response_size), new_image);
+
+    /* if no error, get image */
+    if (!read_response_headers(&rio, response_size))
+        read_response_image(&rio, atoi(response_size), new_image);
 }
 
-void read_response_headers(rio_t* rp, char* filesize) {
+int read_response_headers(rio_t* rp, char* filesize) {
 
-    char buf[MAXLINE];
+    char buf[MAXLINE], version[MAXLINE], code[MAXLINE];
     char* ptr;
-    int count = 0;
+    int error = 0;
 
+    Rio_readlineb(rp, buf, MAXLINE);
+    sscanf(buf, "%s %s", version, code);
+    printf("%s", buf);
+    if (strcmp(code, "200")) {
+        error = 1;
+    }
     //print request information while we read
     while (strcmp(buf, "\r\n")) {
         Rio_readlineb(rp, buf, MAXLINE);
@@ -70,6 +78,7 @@ void read_response_headers(rio_t* rp, char* filesize) {
         }
         printf("%s", buf);
     }
+    return error;
 }
 
 void read_response_image(rio_t* rp, int filesize, char* filename) {

@@ -6,9 +6,14 @@
 #include <sys/stat.h>
 
 #include "image_process.hpp"
+#include "ips_queue.h"
 #include "csapp.h"
 
-void *serve_request (void* args);
+#define NUM_THREADS 3
+
+void *listen_for_request(void* args);
+void *serve_requests(void* args);
+void process_request (int fd);
 void format_success(int fd, char* shortmsg, char* longmsg);
 void format_error(int fd, char* cause, char* error_num, char* shortmsg, char* longmsg);
 void read_request_headers(rio_t* rp, char* content_type, char* content_size);
@@ -16,8 +21,15 @@ void read_image_file(rio_t* rp, int filesize, char* filename);
 void send_image_file(int fd, char* filename);
 void get_filetype(char* filename, char* filetype);
 
+struct thread_args {
+    int port_num;
+    queue* process_queue;
+};
+
 int main (int argc, char* argv[]) {
-    int listenfd;
+    struct thread_args arguments;
+    pthread_t listen_thread;
+    pthread_t worker_threads[NUM_THREADS];
     int port;
 
     if (argc != 2) {
@@ -26,35 +38,89 @@ int main (int argc, char* argv[]) {
     }
     port = atoi(argv[1]);
 
-    listenfd = Open_listenfd(port);
+    arguments.port_num = port;
+    arguments.process_queue = queue_init();
 
-    while (1) {
-        int* connfd;
-        pthread_t request_thread;
-        struct sockaddr_in client_addr;
-        socklen_t client_len;
-
-        connfd = (int *)malloc(sizeof(int));
-        client_len = sizeof(client_addr);
-        *connfd = Accept(listenfd, (SA *)&client_addr, &client_len);
-        pthread_create(&request_thread, NULL, serve_request, connfd);
-        //serve_request(connfd);
-        //Close(*connfd);
+    //Create worker threads
+    for (int i = 0; i < NUM_THREADS; i++) {
+        pthread_create(&worker_threads[i], NULL, serve_requests, &arguments);
     }
+    //Create main thread
+    pthread_create(&listen_thread, NULL, listen_for_request, &arguments);
 
+    //Cleanup
+    for (int i = 0; i < NUM_THREADS; i++) {
+        pthread_join(worker_threads[i], NULL);
+    }
+    pthread_join(listen_thread, NULL);
+    queue_delete(arguments.process_queue);
     return 0;
 }
 
-void *serve_request(void* args) {
+void *listen_for_request(void* args) {
+    int listenfd;
+    struct thread_args arguments;
+    int port;
+    queue* process_queue;
+
+    /* Dereference arguments */
+    arguments = *(struct thread_args *)args;
+    port = arguments.port_num;
+    process_queue = arguments.process_queue;
+
+    /* Start listening */
+    listenfd = Open_listenfd(port);
+    while (1) {
+        int connfd;
+        struct sockaddr_in client_addr;
+        socklen_t client_len;
+
+        client_len = sizeof(client_addr);
+        connfd = Accept(listenfd, (SA *)&client_addr, &client_len);
+        
+        /* Add to queue */
+        pthread_mutex_lock(process_queue->mut);
+        while(process_queue->full) {
+            pthread_cond_wait(process_queue->not_full, process_queue->mut);
+        }
+        queue_add(process_queue, connfd);
+        pthread_mutex_unlock(process_queue->mut);
+        pthread_cond_signal(process_queue->not_empty);
+    }
+    return NULL;
+}
+
+void *serve_requests(void* args) {
+    int fd;
+    struct thread_args arguments;
+    queue* process_queue;
+
+    /* Dereference arguments */
+    arguments = *(struct thread_args *)args;
+    process_queue = arguments.process_queue;
+
+    /* Keep checking queue */
+    while(1) {
+        pthread_mutex_lock(process_queue->mut);
+        while(process_queue->empty) {
+            pthread_cond_wait(process_queue->not_empty, process_queue->mut);
+        }
+        queue_del(process_queue, &fd);
+        pthread_mutex_unlock(process_queue->mut);
+        pthread_cond_signal(process_queue->not_full);
+
+        /* Process request */
+        process_request(fd);
+    }
+    return NULL;
+}
+
+void process_request(int fd) {
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
     char image_type[MAXLINE], image_size[MAXLINE];
     char image_file[MAXLINE], output_file[MAXLINE];
     struct stat sbuf;
     rio_t rio;
-    int fd;
-
-    //dereference connection descriptor
-    fd = *(int *)args;
 
     Rio_readinitb(&rio, fd);
     Rio_readlineb(&rio, buf, MAXLINE);
@@ -70,28 +136,28 @@ void *serve_request(void* args) {
             if (!strcmp(uri, "/grayscale")) {
                 strcat(output_file, "-grayscale.jpg");
                 grayscale_file(image_file, output_file);
+                send_image_file(fd, output_file);
             }
             else if (!strcmp(uri, "/edge-detect")) {
                 strcat(output_file, "-edge-detect.jpg");
                 edge_detect_file(image_file, output_file, 25, 50, 3);
+                send_image_file(fd, output_file);
             }
             else if (!strcmp(uri, "/blur")) {
                 strcat(output_file, "-blur.jpg");
                 blur_file(image_file, output_file, 20);
+                send_image_file(fd, output_file);
             }
             else {
                 format_error(fd, uri, "404", "Missing", "Invalid type of processing method");
-                Close(fd);
-                return NULL;
             }
-            send_image_file(fd, output_file);
         }
         else {
             format_error(fd, method, "404", "File type not supported",
                 "Simple image server cannot support this file type");
         }
         Close(fd);
-        return NULL;
+        return;
     }
 
     format_error(fd, method, "501", "Not Implemented",
