@@ -118,14 +118,14 @@ void *listen_for_request(void* args) {
         connfd = Accept(listenfd, (SA *)&client_addr, &client_len);
         
         /* Add to queue */
-        printf("Listener is locking...\n\n");
+        //printf("Listener is locking...\n\n");
         pthread_mutex_lock(process_queue->mut);
         while(process_queue->full) {
-            pthread_cond_wait(process_queue->not_full, process_queue->mut);
             printf("Queue is full!\n");
+            pthread_cond_wait(process_queue->not_full, process_queue->mut);
         }
         queue_add(process_queue, connfd);
-        printf("Listener is unlocking...\n\n");
+        //printf("Listener is unlocking...\n\n");
         pthread_mutex_unlock(process_queue->mut);
         pthread_cond_signal(process_queue->not_empty);
     }
@@ -147,13 +147,13 @@ void *serve_requests(void* args) {
 
     /* Keep checking queue */
     while(1) {
-        printf("Worker is locking...\n\n");
+        //printf("Worker is locking...\n\n");
         pthread_mutex_lock(process_queue->mut);
         while(process_queue->empty) {
             pthread_cond_wait(process_queue->not_empty, process_queue->mut);
         }
         queue_del(process_queue, &fd);
-        printf("Worker is unlocking...\n\n");
+        //printf("Worker is unlocking...\n\n");
         pthread_mutex_unlock(process_queue->mut);
         pthread_cond_signal(process_queue->not_full);
 
