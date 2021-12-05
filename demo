@@ -1,0 +1,19 @@
+#!/bin/bash
+
+./ips-client 1024 test_images/test1.jpg grayscale&
+sleep 5
+./ips-client 1024 test_images/test1.jpg edge-detect&
+sleep 5
+./ips-client 1024 test_images/test1.jpg blur&
+sleep 5
+./ips-client 1024 test_images/test2.jpg grayscale&
+sleep 5
+./ips-client 1024 test_images/test2.jpg edge-detect&
+sleep 5
+./ips-client 1024 test_images/test2.jpg blur&
+sleep 5
+./ips-client 1024 test_images/test3.jpg grayscale&
+sleep 5
+./ips-client 1024 test_images/test3.jpg edge-detect&
+sleep 5
+./ips-client 1024 test_images/test3.jpg blur&

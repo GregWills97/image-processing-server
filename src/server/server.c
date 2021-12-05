@@ -11,6 +11,7 @@
 #include "csapp.h"
 
 #define NUM_THREADS 3
+#define LOG_FILE "./ips-server.log"
 
 void *listen_for_request(void* args);
 void *serve_requests(void* args);
@@ -118,14 +119,13 @@ void *listen_for_request(void* args) {
         connfd = Accept(listenfd, (SA *)&client_addr, &client_len);
         
         /* Add to queue */
-        //printf("Listener is locking...\n\n");
         pthread_mutex_lock(process_queue->mut);
         while(process_queue->full) {
             printf("Queue is full!\n");
             pthread_cond_wait(process_queue->not_full, process_queue->mut);
         }
+        printf("Listen thread adding to queue\n");
         queue_add(process_queue, connfd);
-        //printf("Listener is unlocking...\n\n");
         pthread_mutex_unlock(process_queue->mut);
         pthread_cond_signal(process_queue->not_empty);
     }
@@ -147,19 +147,18 @@ void *serve_requests(void* args) {
 
     /* Keep checking queue */
     while(1) {
-        //printf("Worker is locking...\n\n");
         pthread_mutex_lock(process_queue->mut);
         while(process_queue->empty) {
             pthread_cond_wait(process_queue->not_empty, process_queue->mut);
         }
+        printf("Worker thread grabbing from queue\n");
         queue_del(process_queue, &fd);
-        //printf("Worker is unlocking...\n\n");
         pthread_mutex_unlock(process_queue->mut);
         pthread_cond_signal(process_queue->not_full);
 
         /* Process request */
         process_request(fd);
-        sleep(10);
+        sleep(30);
     }
     return NULL;
 }
@@ -170,10 +169,14 @@ void process_request(int fd) {
     char image_file[MAXLINE], output_file[MAXLINE];
     struct stat sbuf;
     rio_t rio;
+    FILE *fp;
+
+    fp = fopen(LOG_FILE, "w");
 
     Rio_readinitb(&rio, fd);
     Rio_readlineb(&rio, buf, MAXLINE);
-    printf("%s", buf);
+    fprintf(fp, "%s", buf);
+    fclose(fp);
     sscanf(buf, "%s %s %s", method, uri, version);
     read_request_headers(&rio, image_type, image_size);
 
@@ -217,6 +220,9 @@ void process_request(int fd) {
 void read_request_headers(rio_t* rp, char* content_type, char* content_size) {
     char buf[MAXLINE];
     char* ptr;
+    FILE *fp;
+
+    fp = fopen(LOG_FILE, "w");
 
     //print request information while we read
     while (strcmp(buf, "\r\n")) {
@@ -231,8 +237,9 @@ void read_request_headers(rio_t* rp, char* content_type, char* content_size) {
             if (ptr)
                 strcpy(content_size, ptr+1);
         }
-        printf("%s", buf);
+        fprintf(fp, "%s", buf);
     }
+    fclose(fp);
 }
 
 void read_image_file(rio_t* rp, int filesize, char* filename) {

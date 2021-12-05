@@ -3,6 +3,8 @@
 
 #include "csapp.h"
 
+#define LOG_FILE "./ips-client.log"
+
 void send_file(int fd, int port, char* filename, char* process_type, int filesize);
 void make_request(int fd, int port, char* filename, char* process_type, int filesize);
 int read_response_headers(rio_t* rp, char* filesize);
@@ -32,6 +34,7 @@ int main(int argc, char* argv[]) {
 
     clientfd = Open_clientfd("localhost", port);
 
+    printf("Sending request...\n");
     send_file(clientfd, port, file_name, process_type, sbuf.st_size);
 
     Close(clientfd);
@@ -53,8 +56,10 @@ void send_file(int fd, int port, char* filename, char* process_type, int filesiz
     make_request(fd, port, filename, process_type, filesize);
 
     /* if no error, get image */
-    if (!read_response_headers(&rio, response_size))
+    if (!read_response_headers(&rio, response_size)) {
         read_response_image(&rio, atoi(response_size), new_image);
+        printf("Received image back\n");
+    }
 }
 
 int read_response_headers(rio_t* rp, char* filesize) {
@@ -63,9 +68,13 @@ int read_response_headers(rio_t* rp, char* filesize) {
     char* ptr;
     int error = 0;
 
+    FILE* fp;
+
+    fp = fopen(LOG_FILE, "w");
+
     Rio_readlineb(rp, buf, MAXLINE);
     sscanf(buf, "%s %s", version, code);
-    printf("%s", buf);
+    fprintf(fp, "%s", buf);
     if (strcmp(code, "200")) {
         error = 1;
     }
@@ -77,8 +86,9 @@ int read_response_headers(rio_t* rp, char* filesize) {
             if (ptr)
                 strcpy(filesize, ptr+1);
         }
-        printf("%s", buf);
+        fprintf(fp, "%s", buf);
     }
+    fclose(fp);
     return error;
 }
 
