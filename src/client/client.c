@@ -45,6 +45,7 @@ void send_file(int fd, int port, char* filename, char* process_type, int filesiz
     rio_t rio;
 
     strncpy(new_image, filename, (strlen(filename)-4)); //remove extension
+    strcat(new_image, "-");
     strcat(new_image, process_type);
     strcat(new_image, ".jpg");
 

@@ -1,6 +1,7 @@
 *.o
 ips-server
 ips-client
+demo
 
 output/
 build/

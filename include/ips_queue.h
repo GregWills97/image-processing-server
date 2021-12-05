@@ -6,8 +6,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#define QUEUESIZE 16
-#define LOOP 5
+#define QUEUESIZE 6
 
 typedef struct {
     int buf[QUEUESIZE];

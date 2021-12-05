@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <pthread.h>
 #include <time.h>
@@ -82,6 +83,7 @@ void *listen_for_request(void* args) {
         pthread_mutex_lock(process_queue->mut);
         while(process_queue->full) {
             pthread_cond_wait(process_queue->not_full, process_queue->mut);
+            printf("Queue is full!\n");
         }
         queue_add(process_queue, connfd);
         pthread_mutex_unlock(process_queue->mut);
@@ -111,6 +113,7 @@ void *serve_requests(void* args) {
 
         /* Process request */
         process_request(fd);
+        sleep(10);
     }
     return NULL;
 }

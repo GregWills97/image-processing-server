@@ -5,7 +5,6 @@ CXX=g++
 # paths
 SRCDIR = ./src
 BUILD = ./build
-OUTDIR = ./output
 INCDIR = ./include
 DOWNLOADS = ./downloads
 
@@ -49,7 +48,6 @@ all : directories $(SERVER) $(CLIENT)
 directories: 
 	@mkdir -p $(BUILD)/server
 	@mkdir -p $(BUILD)/client
-	@mkdir -p $(OUTDIR)
 	@mkdir -p $(DOWNLOADS)
 
 $(SERVER) : $(SERVER_OBJECTS)
