@@ -49,7 +49,7 @@ int main (int argc, char* argv[]) {
     my_param.sched_priority = sched_get_priority_min(SCHED_FIFO);
     min_priority = my_param.sched_priority;
     pthread_setschedparam(pthread_self(), SCHED_RR, &my_param);
-	pthread_getschedparam (pthread_self(), &policy, &my_param);
+    pthread_getschedparam(pthread_self(), &policy, &my_param);
 
     /* Setup policy and priority for other threads */
     pthread_attr_init(&hp_attr);
