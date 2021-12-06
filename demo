@@ -1,5 +1,7 @@
 #!/bin/bash
 
+./ips-client 1024 test_images/test4.jpg face-detect&
+sleep 3
 ./ips-client 1024 test_images/test1.jpg grayscale&
 sleep 3
 ./ips-client 1024 test_images/test1.jpg edge-detect&

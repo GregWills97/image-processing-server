@@ -16,7 +16,8 @@ LIBS = -lopencv_core \
        -lopencv_imgproc \
        -lopencv_highgui \
        -lopencv_imgcodecs \
-       -lpthread
+       -lpthread \
+       -lopencv_objdetect
 
 CFLAGS = $(INCS)
 CXXFLAGS = $(CFLAGS) --std=c++11

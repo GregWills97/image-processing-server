@@ -5,11 +5,15 @@
 extern "C" {
 #endif
 
+
 void grayscale_file(const char* in_file_path, const char* out_file_path);
 
 void edge_detect_file(const char* in_file_path, const char* out_file_path, int low_threshold, int high_threshold, int kernel_size);
 
 void blur_file(const char* in_file_path, const char* out_file_path, int kernel_size);
+
+void face_detect_file(const char* in_file_path, const char* out_file_path);
+
 
 #ifdef __cplusplus
 } //end extern c

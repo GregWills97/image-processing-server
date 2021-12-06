@@ -196,6 +196,12 @@ void process_request(int fd) {
                 blur_file(image_file, output_file, 20);
                 send_image_file(fd, output_file);
             }
+	    else if(!strcmp(uri, "/face-detect")){
+	      strcat(output_file, "-face-detect.jpg");
+	      face_detect_file(image_file, output_file);
+	      send_image_file(fd, output_file);
+	    }
+	    
             else {
                 format_error(fd, uri, "404", "Missing", "Invalid type of processing method");
             }
