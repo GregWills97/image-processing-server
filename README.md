@@ -4,6 +4,8 @@ This project is an image processing server for GNU/Linux operating systems.
 ## Compilation
 First install [opencv](https://opencv.org/)
 
+Copy src/server/haarcascade_frontalface_default.xml to /etc 
+
 To compile, simply run:
 ```
 make

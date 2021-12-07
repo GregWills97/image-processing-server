@@ -79,7 +79,9 @@ void face_detect_file(const char* in_file_path, const char* out_file_path){
   
   //Pre-built Face Detection Classifier found in OpenCV source.
   cv::CascadeClassifier faceCascade;
-  faceCascade.load("/home/terrill/FinalProject/fork/image-processing-server/src/server/haarcascade_frontalface_default.xml");
+  //faceCascade.load("/home/terrill/FinalProject/fork/image-processing-server/src/server/haarcascade_frontalface_default.xml");
+  faceCascade.load("/etc/haarcascade_frontalface_default.xml");
+  
 
   cv::Mat grayscale;
   cv::cvtColor(src, grayscale, cv::COLOR_BGR2GRAY);
